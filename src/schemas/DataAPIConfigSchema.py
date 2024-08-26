@@ -26,17 +26,17 @@ class DataAPIConfigSchema(ServerConfigSchema):
         self._version          : int
 
         if "DB_CONFIG" in all_elements.keys():
-            self._data_src = ServerConfigSchema._parseDataSources(all_elements["DB_CONFIG"], logger=logger)
+            self._data_src = DataAPIConfigSchema._parseDataSources(all_elements["DB_CONFIG"], logger=logger)
         else:
             self._data_src = {}
             logger.warning(f"{name} config does not have a 'DB_CONFIG' element; defaulting to game_sources={self._data_src}", logging.WARN)
         if "OGD_CORE_PATH" in all_elements.keys():
-            self._ogd_core = ServerConfigSchema._parseOGDPath(path=all_elements["OGD_CORE_PATH"], logger=logger)
+            self._ogd_core = DataAPIConfigSchema._parseOGDPath(path=all_elements["OGD_CORE_PATH"], logger=logger)
         else:
             self._ogd_core = Path("./") / "opengamedata"
             logger.warning(f"{name} config does not have a 'OGD_CORE_PATH' element; defaulting to ogd_core_path={self._ogd_core}", logging.WARN)
         if "GOOGLE_CLIENT_ID" in all_elements.keys():
-            self._google_client_id = ServerConfigSchema._parseGoogleID(google_id=all_elements["GOOGLE_CLIENT_ID"], logger=logger)
+            self._google_client_id = DataAPIConfigSchema._parseGoogleID(google_id=all_elements["GOOGLE_CLIENT_ID"], logger=logger)
         else:
             self._google_client_id = "UNKNOWN ID"
             logger.warning(f"{name} config does not have a 'GOOGLE_CLIENT_ID' element; defaulting to google_client_id={self._google_client_id}", logging.WARN)
