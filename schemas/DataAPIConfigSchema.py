@@ -29,17 +29,17 @@ class DataAPIConfigSchema(ServerConfigSchema):
             self._data_src = ServerConfigSchema._parseDataSources(all_elements["DB_CONFIG"], logger=logger)
         else:
             self._data_src = {}
-            logger.warn(f"{name} config does not have a 'DB_CONFIG' element; defaulting to game_sources={self._data_src}", logging.WARN)
+            logger.warning(f"{name} config does not have a 'DB_CONFIG' element; defaulting to game_sources={self._data_src}", logging.WARN)
         if "OGD_CORE_PATH" in all_elements.keys():
             self._ogd_core = ServerConfigSchema._parseOGDPath(path=all_elements["OGD_CORE_PATH"], logger=logger)
         else:
             self._ogd_core = Path("./") / "opengamedata"
-            logger.warn(f"{name} config does not have a 'OGD_CORE_PATH' element; defaulting to ogd_core_path={self._ogd_core}", logging.WARN)
+            logger.warning(f"{name} config does not have a 'OGD_CORE_PATH' element; defaulting to ogd_core_path={self._ogd_core}", logging.WARN)
         if "GOOGLE_CLIENT_ID" in all_elements.keys():
             self._google_client_id = ServerConfigSchema._parseGoogleID(google_id=all_elements["GOOGLE_CLIENT_ID"], logger=logger)
         else:
             self._google_client_id = "UNKNOWN ID"
-            logger.warn(f"{name} config does not have a 'GOOGLE_CLIENT_ID' element; defaulting to google_client_id={self._google_client_id}", logging.WARN)
+            logger.warning(f"{name} config does not have a 'GOOGLE_CLIENT_ID' element; defaulting to google_client_id={self._google_client_id}", logging.WARN)
 
         _used = {"DB_CONFIG", "OGD_CORE_PATH", "GOOGLE_CLIENT_ID"}
         _leftovers = { key : val for key,val in all_elements.items() if key not in _used }
@@ -73,7 +73,7 @@ class DataAPIConfigSchema(ServerConfigSchema):
                 ret_val[key] = MySQLSchema(name=key, all_elements=val)
         else:
             ret_val = {}
-            logger.warn(f"Config data sources was unexpected type {type(sources)}, defaulting to empty dict: {ret_val}.", logging.WARN)
+            logger.warning(f"Config data sources was unexpected type {type(sources)}, defaulting to empty dict: {ret_val}.", logging.WARN)
         return ret_val
 
     @staticmethod
@@ -83,7 +83,7 @@ class DataAPIConfigSchema(ServerConfigSchema):
             ret_val = Path(path)
         else:
             ret_val = Path("./") / "opengamedata"
-            logger.warn(f"Data Source DB type was unexpected type {type(path)}, defaulting to path={ret_val}.", logging.WARN)
+            logger.warning(f"Data Source DB type was unexpected type {type(path)}, defaulting to path={ret_val}.", logging.WARN)
         return ret_val
 
     @staticmethod
@@ -93,5 +93,5 @@ class DataAPIConfigSchema(ServerConfigSchema):
             ret_val = google_id
         else:
             ret_val = str(google_id)
-            logger.warn(f"Google Client ID type was unexpected type {type(google_id)}, defaulting to google_client_id=str({ret_val}).", logging.WARN)
+            logger.warning(f"Google Client ID type was unexpected type {type(google_id)}, defaulting to google_client_id=str({ret_val}).", logging.WARN)
         return ret_val
