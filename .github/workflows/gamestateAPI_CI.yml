@@ -1,23 +1,22 @@
 # Workflow to build and deploy designer dashboard to server.
-name: OpenGameData Features API CI
+name: OpenGameData GameState API CI
 on:
   push:
     paths:
-    - '.github/workflows/featureAPI_CI.yml'
+    - '.github/workflows/gamestateAPI_CI.yml'
     - '.github/actions/**'
-    - 'shared/**'
-    - 'apps/features/**'
+    - 'src/**'
+    - 'requirements.txt'
   workflow_dispatch: # Allow manual trigger of this workflow from the Actions tab
 
 env:
   DEPLOY_HOST: ${{ vars.OGD_STAGING_HOST }}
-  DEPLOY_DIR:  ${{ vars.WSGI_PATH }}/${{ github.event.repository.name }}/${{ github.ref_name }}/gamestates
-  DEPLOY_URL:  ${{ vars.OGD_STAGING_HOST }}/wsgi-bin/${{ github.event.repository.name }}/${{ github.ref_name }}/gamestates
-  URL_PATH:    wsgi-bin/${{ github.event.repository.name }}/${{ github.ref_name }}/gamestates
+  DEPLOY_DIR:                              ${{ vars.API_BASE_PATH }}/${{ github.event.repository.name }}/${{ github.ref_name }}
+  DEPLOY_URL:  ${{ vars.OGD_STAGING_HOST }}/${{ vars.API_BASE_URL }}/${{ github.event.repository.name }}/${{ github.ref_name }}/app.wsgi
 
 jobs:
   ci_deploy:
-    name: CI Deploy of Feature APIs
+    name: CI Deploy of GameState API
     runs-on: ubuntu-22.04
     steps:
 
@@ -75,25 +74,7 @@ jobs:
         # --chmod : For each directory (D) and file (F), give user (u) and group (g) rwx permissions.
         #           Give others (o) only read permissions, plus execute for directories.
         switches: -vrct --delete --exclude-from 'rsync-exclude' --chmod=Du=rwx,Dg=rwx,Do=rx,Fu=rwx,Fg=rwx,Fo=r
-        path: shared/*
-        remote_path: ${{ env.DEPLOY_DIR }}/shared
-        remote_host: ${{ env.DEPLOY_HOST }}
-        remote_user: ${{ secrets.DEPLOY_USER }}
-        remote_key:  ${{ secrets.DEPLOY_KEY  }}
-    - name: Upload *App* to web server via rsync
-      uses: burnett01/rsync-deployments@5.2
-      with:
-        # switches:
-        # -v : verbose output
-        # -r : recurse into subdirectories
-        # -c : use checksum to determine what files to update/skip
-        # -t : preserve modification times
-        # --delete : delete extraneous files from destination directories
-        # --exclude-from : skip any files in rsync-exclude
-        # --chmod : For each directory (D) and file (F), give user (u) and group (g) rwx permissions.
-        #           Give others (o) only read permissions, plus execute for directories.
-        switches: -vrct --delete --exclude-from 'rsync-exclude' --chmod=Du=rwx,Dg=rwx,Do=rx,Fu=rwx,Fg=rwx,Fo=r
-        path: apps/features/*
+        path: ./src/*
         remote_path: ${{ env.DEPLOY_DIR }}
         remote_host: ${{ env.DEPLOY_HOST }}
         remote_user: ${{ secrets.DEPLOY_USER }}
@@ -101,11 +82,11 @@ jobs:
     - name: Upload OGD access key
       run: |
         echo '${{secrets.OGD_SELECTOR_BQ_KEY}}' >> ./ogd.json
-        scp -o StrictHostKeyChecking=no -i ./key.txt ./ogd.json ${{ secrets.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}:${{env.DEPLOY_DIR}}/shared/config/ogd.json
+        scp -o StrictHostKeyChecking=no -i ./key.txt ./ogd.json ${{ secrets.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}:${{env.DEPLOY_DIR}}/config/ogd.json
 
   # 4. Cleanup & complete
-    - name: Trigger Graceful Reboot
-      run: ssh -o StrictHostKeyChecking=no -T -i ./key.txt ${{ secrets.DEPLOY_USER }}@${{ env.DEPLOY_HOST }} "sudo apachectl -k graceful"
+    - name: Restart httpd via ssh
+      run: ssh -o StrictHostKeyChecking=no -T -i ./key.txt ${{ secrets.DEPLOY_USER }}@${{ env.DEPLOY_HOST }} "sudo systemctl restart apache2"
     - name: Announce deploy
       run: echo "Deployed to ${{ env.DEPLOY_URL }}"
     - name: Upload logs as artifacts
