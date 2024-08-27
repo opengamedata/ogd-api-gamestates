@@ -33,30 +33,34 @@ inputs:
     description: "Logging level to use for export process"
     required: true
     default: "INFO"
+  config_path:
+    description: "Local path to config folder"
+    required: false
+    default: 'src/config'
 runs:
   using: "composite"
   steps:
     - name: Set up config
-      run: cp shared/config/coreconfig.py.template shared/config/coreconfig.py 
+      run: cp ${{ inputs.config_path }}/coreconfig.py.template shared/config/coreconfig.py 
       shell: bash
     - name: Set SQL username
-      run: sed -i 's/username/${{inputs.sql_user}}/g' shared/config/coreconfig.py
+      run: sed -i 's/username/${{inputs.sql_user}}/g' ${{ inputs.config_path }}/coreconfig.py
       shell: bash
     - name: Set SQL password
-      run: sed -i 's/password/${{inputs.sql_pass}}/g' shared/config/coreconfig.py
+      run: sed -i 's/password/${{inputs.sql_pass}}/g' ${{ inputs.config_path }}/coreconfig.py
       shell: bash
     - name: Set SSH hostname
-      run: sed -i 's/hostname/${{inputs.sql_host}}/g' shared/config/coreconfig.py
+      run: sed -i 's/hostname/${{inputs.sql_host}}/g' ${{ inputs.config_path }}/coreconfig.py
       shell: bash
     - name: Set SSH username
-      run: sed -i 's/WCER AD User/${{inputs.ssh_user}}/g' shared/config/coreconfig.py
+      run: sed -i 's/WCER AD User/${{inputs.ssh_user}}/g' ${{ inputs.config_path }}/coreconfig.py
       shell: bash
     - name: Set SSH password
-      run: sed -i 's/WCER AD Password/${{inputs.ssh_pass}}/g' shared/config/coreconfig.py
+      run: sed -i 's/WCER AD Password/${{inputs.ssh_pass}}/g' ${{ inputs.config_path }}/coreconfig.py
       shell: bash
     - name: Set Logger level
-      run: sed -i 's/INFO/${{inputs.log_level}}/g' shared/config/coreconfig.py
+      run: sed -i 's/INFO/${{inputs.log_level}}/g' ${{ inputs.config_path }}/coreconfig.py
       shell: bash
     - name: Set Slice Size
-      run: sed -i 's/"BATCH_SIZE"\s*:\s*1000,/"BATCH_SIZE":${{inputs.slice_size}},/g' shared/config/coreconfig.py
+      run: sed -i 's/"BATCH_SIZE"\s*:\s*1000,/"BATCH_SIZE":${{inputs.slice_size}},/g' ${{ inputs.config_path }}/coreconfig.py
       shell: bash
