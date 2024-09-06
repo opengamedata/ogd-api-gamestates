@@ -41,7 +41,7 @@ runs:
   using: "composite"
   steps:
     - name: Set up config
-      run: cp ${{ inputs.config_path }}/coreconfig.py.template shared/config/coreconfig.py 
+      run: cp ${{ inputs.config_path }}/coreconfig.py.template ${{ inputs.config_path }}/coreconfig.py 
       shell: bash
     - name: Set SQL username
       run: sed -i 's/username/${{inputs.sql_user}}/g' ${{ inputs.config_path }}/coreconfig.py
