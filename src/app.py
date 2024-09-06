@@ -44,7 +44,7 @@ dictConfig({
 application = Flask(__name__)
 
 # import locals
-from shared.config.config import settings
+from config.config import settings
 _ogd_core = settings['OGD_CORE_PATH']
 
 application.logger.setLevel(settings['DEBUG_LEVEL'])
