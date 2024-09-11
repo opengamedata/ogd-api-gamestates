@@ -1,30 +1,32 @@
 # Workflow to build and deploy designer dashboard to server.
-name: OpenGameData Features API CI
+name: OGD GameStates API - Release Script
+run-name: ${{ format('{0} - {1}', github.workflow, github.event_name == 'release' && github.ref || 'Manual Run') }}
 on:
-  push:
-    paths:
-    - '.github/workflows/featureAPI_CI.yml'
-    - '.github/actions/**'
-    - 'shared/**'
-    - 'apps/features/**'
-  workflow_dispatch: # Allow manual trigger of this workflow from the Actions tab
+  #create:
+  #  tags:
+  #    - '*'
+  workflow_dispatch:
+  release:
+    types: released
 
 env:
-  DEPLOY_HOST: ${{ vars.OGD_STAGING_HOST }}
-  DEPLOY_DIR:  ${{ vars.WSGI_PATH }}/${{ github.event.repository.name }}/${{ github.ref_name }}/gamestates
-  DEPLOY_URL:  ${{ vars.OGD_STAGING_HOST }}/wsgi-bin/${{ github.event.repository.name }}/${{ github.ref_name }}/gamestates
-  URL_PATH:    wsgi-bin/${{ github.event.repository.name }}/${{ github.ref_name }}/gamestates
+  DEPLOY_HOST: ${{ vars.OGD_SERVICES_HOST }}
+  DEPLOY_DIR:                               ${{ vars.API_BASE_PATH }}/gamestates/
+  DEPLOY_URL:  ${{ vars.OGD_SERVICES_HOST }}/${{ vars.API_BASE_URL }}/gamestates/app.wsgi
 
 jobs:
-  ci_deploy:
-    name: CI Deploy of Feature APIs
+  production_deploy:
+    name: Release Deploy of GameStates API
     runs-on: ubuntu-22.04
+    concurrency:
+      group: ${{ github.repository }}-${{ github.ref }}-${{ github.workflow }}
+      cancel-in-progress: true
+
     steps:
 
   # 1. Local checkout & config
-    - uses: actions/checkout@v3
-      with:
-        submodules: 'true'
+    - name: Checkout repository
+      uses: actions/checkout@v3
     - name: Set up Config File
       uses: ./.github/actions/API_config
       with:
@@ -49,7 +51,7 @@ jobs:
   # 2. Build 
 
   # 3. Remote config & deploy
-    - name: Get OpenConnect installed
+    - name: Install OpenConnect
       run: sudo apt-get -q update && sudo apt-get -q install openconnect
     - name: Connect VPN
       run: echo ${{ secrets.VPN_PASS }} | sudo openconnect --protocol=gp -u ${{ secrets.VPN_USER }} --passwd-on-stdin soe.vpn.wisc.edu &
@@ -65,17 +67,17 @@ jobs:
     - name: Upload *shared code* to web server via rsync
       uses: burnett01/rsync-deployments@5.2
       with:
-        switches: -vrc --exclude-from rsync-exclude
-        path: shared/*
-        remote_path: ${{ env.DEPLOY_DIR }}/shared
-        remote_host: ${{ env.DEPLOY_HOST }}
-        remote_user: ${{ secrets.DEPLOY_USER }}
-        remote_key:  ${{ secrets.DEPLOY_KEY  }}
-    - name: Upload *App* to web server via rsync
-      uses: burnett01/rsync-deployments@5.2
-      with:
-        switches: -vrc --exclude-from rsync-exclude
-        path: apps/features/*
+        # switches:
+        # -v : verbose output
+        # -r : recurse into subdirectories
+        # -c : use checksum to determine what files to update/skip
+        # -t : preserve modification times
+        # --delete : delete extraneous files from destination directories
+        # --exclude-from : skip any files in rsync-exclude
+        # --chmod : For each directory (D) and file (F), give user (u) and group (g) rwx permissions.
+        #           Give others (o) only read permissions, plus execute for directories.
+        switches: -vrct --delete --exclude-from 'rsync-exclude' --chmod=Du=rwx,Dg=rwx,Do=rx,Fu=rwx,Fg=rwx,Fo=r
+        path: ./src/*
         remote_path: ${{ env.DEPLOY_DIR }}
         remote_host: ${{ env.DEPLOY_HOST }}
         remote_user: ${{ secrets.DEPLOY_USER }}
@@ -86,8 +88,9 @@ jobs:
         scp -o StrictHostKeyChecking=no -i ./key.txt ./ogd.json ${{ secrets.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}:${{env.DEPLOY_DIR}}/shared/config/ogd.json
 
   # 4. Cleanup & complete
-    - name: Trigger Graceful Reboot
-      run: ssh -o StrictHostKeyChecking=no -T -i ./key.txt ${{ secrets.DEPLOY_USER }}@${{ env.DEPLOY_HOST }} "sudo apachectl -k graceful"
+    - name: Restart httpd via ssh
+      run: ssh -o StrictHostKeyChecking=no -T -i ./key.txt ${{ secrets.DEPLOY_USER }}@${{ env.DEPLOY_HOST }} "sudo systemctl restart apache2"
+
     - name: Announce deploy
       run: echo "Deployed to ${{ env.DEPLOY_URL }}"
     - name: Upload logs as artifacts

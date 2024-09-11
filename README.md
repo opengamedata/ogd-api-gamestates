@@ -22,6 +22,21 @@ Below is a listing of the current API calls available, in function format to ind
 For each API, there is also an api path, with path parameters in angle bracket (<, >) format.
 Lastly, at this point in time, the `<server_path>` is `https://fieldday-web.wcer.wisc.edu/opengamedata.wsgi`
 
+### Player ID API
+
+#### Generate and save players
+
+`<server_path>/player`  
+`GET()`
+
+- returns an unused, randomized player name, or a null value and error message  
+
+`PUT(str player_id, str name = None)`
+
+- Returns no value, and either a success or error message  
+
+---
+
 ### GameState API
 
 #### Save and retrieve game states

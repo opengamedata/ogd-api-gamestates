@@ -5,4 +5,4 @@ os.environ['OGD_FLASK_APP_LOG_FILE'] = '/var/log/flask-apps/player-gamestate-app
 
 if not "/var/www/wsgi-bin" in sys.path:
     sys.path.append("/var/www/wsgi-bin")
-from player_game_state_app import application
+from app import application
