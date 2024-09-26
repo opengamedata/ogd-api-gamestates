@@ -1,5 +1,5 @@
 # Workflow to build and deploy designer dashboard to server.
-name: OGD GameStates API - Release Script
+name: Release Script - GameStates API
 run-name: ${{ format('{0} - {1}', github.workflow, github.event_name == 'release' && github.ref || 'Manual Run') }}
 on:
   #create:
