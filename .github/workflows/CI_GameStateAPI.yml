@@ -1,5 +1,5 @@
 # Workflow to build and deploy designer dashboard to server.
-name: OGD GameStates API - CI Script
+name: CI Script - GameStates API
 run-name: ${{ format('{0} - {1}', github.workflow, github.event_name == 'push' && github.event.head_commit.message || 'Manual Run') }}
 on:
   workflow_dispatch:
@@ -27,7 +27,7 @@ jobs:
 
   # 1. Local checkout & config
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Set up Config File
       uses: ./.github/actions/API_config
       with:
@@ -36,7 +36,7 @@ jobs:
         db_pass: ${{secrets.SQL_PASS}}
         id_gen_db_name: ${{ secrets.DBNAME_ID_GEN }}
         fd_users_db_name: ${{ secrets.DBNAME_FD_USERS }}
-        app_path: "apps/features/data.wsgi"
+        app_path: "src/app.wsgi"
         deploy_path: ${{ env.DEPLOY_DIR }}
     - name: Set up Core Config File
       uses: ./.github/actions/OGD_config
@@ -52,10 +52,12 @@ jobs:
   # 2. Build 
 
   # 3. Remote config & deploy
-    - name: Install OpenConnect
-      run: sudo apt-get -q update && sudo apt-get -q install openconnect
-    - name: Connect VPN
-      run: echo ${{ secrets.VPN_PASS }} | sudo openconnect --protocol=gp -u ${{ secrets.VPN_USER }} --passwd-on-stdin soe.vpn.wisc.edu &
+    - name: Connect to VPN
+      uses: opengamedata/actions-openconnect-vpn@v1.1
+      with:
+        username: ${{ secrets.VPN_USER }}
+        password: ${{ secrets.VPN_PASS }}
+        endpoint: "soe.vpn.wisc.edu"
 
     - name: Setup Access Key
       run: |
@@ -66,7 +68,7 @@ jobs:
       run: ssh -o StrictHostKeyChecking=no -T -i ./key.txt ${{ secrets.DEPLOY_USER }}@${{ env.DEPLOY_HOST }} "mkdir -p ${{ env.DEPLOY_DIR }}"
 
     - name: Upload *shared code* to web server via rsync
-      uses: burnett01/rsync-deployments@5.2
+      uses: burnett01/rsync-deployments@7.0.1
       with:
         # switches:
         # -v : verbose output
@@ -94,6 +96,6 @@ jobs:
     - name: Announce deploy
       run: echo "Deployed to ${{ env.DEPLOY_URL }}"
     - name: Upload logs as artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         path: ./*.log
