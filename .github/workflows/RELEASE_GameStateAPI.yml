@@ -31,8 +31,8 @@ jobs:
       uses: ./.github/actions/API_config
       with:
         db_host: ${{ vars.OGD_LOGGER_HOST }}
-        db_user: ${{secrets.SQL_USER}}
-        db_pass: ${{secrets.SQL_PASS}}
+        db_user: ${{ secrets.SQL_USER }}
+        db_pass: ${{ secrets.SQL_PASS }}
         id_gen_db_name: ${{ secrets.DBNAME_ID_GEN }}
         fd_users_db_name: ${{ secrets.DBNAME_FD_USERS }}
         app_path: "apps/features/data.wsgi"
